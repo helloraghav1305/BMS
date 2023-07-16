@@ -12,9 +12,19 @@ class Bank_Account {
     int Money_Deposit;
 
 public:
+    void modify();
     void report() const;
     int retacno() const{
         return account_number;
+    }
+    void dep(int x){
+        Money_Deposit+=x;
+    }
+    void draw(int x) {
+        Money_Deposit-=x;
+    }
+    int retdeposit() const{
+        return Money_Deposit;
     }
     void create_account();
     void Display_Account();
@@ -24,11 +34,24 @@ void Bank_Account::report() const{
     cout<<account_number<<setw(10)<<" "<<name<<setw(10)<<type<<setw(10)<<Money_Deposit<<endl;
     
 }
+void Bank_Account::modify(){
+    cout<<"\tAccount number: "<<account_number<<endl;
+    cout<<"\tModify account holder name: ";
+    cin.ignore();
+    cin.getline(name,50);
+    cout<<"\tModify type of account: ";
+    cin>>type;
+    type=toupper(type);
+    cout<<"\tModify balance amount: ";
+    cin>>Money_Deposit;
+}
 
 void write_account();
 void display_details(int);
 void delete_account(int);
 void display_all();
+void Money_deposit_withdraw(int,int);
+void Updation_bank_account(int);
 
 void Bank_Account::create_account(){
     system("clear");
@@ -84,13 +107,13 @@ int main() {
             system("clear");
             cout<<"\t Enter the account number: ";
             cin>>num;
-            
+            Money_deposit_withdraw(num,1);
             break;
         case '3':
             system("clear");
             cout<<"\t Enter the account number: ";
             cin>>num;
-            
+            Money_deposit_withdraw(num,2);
             break;
         case '4':
             system("clear");
@@ -111,7 +134,7 @@ int main() {
             system("clear");
             cout<<"\t Enter the account number: ";
             cin>>num;
-            
+            Updation_bank_account(num);
             break;
         case '8':
             cout<<"\t Thanks for using the bank management system"<<endl;
@@ -197,4 +220,75 @@ void display_all() {
         ac.report();
     }
     inFile.close();
+}
+
+void Money_deposit_withdraw(int n, int option) {
+    int amt;
+    bool found = false;
+    Bank_Account ac;
+    fstream File;
+    File.open("account.dat", ios::binary|ios::in|ios::out);
+    if(!File){
+        cout<<"File could not be open || Press any key...";
+        return;
+    }
+    while(!File.eof() && found==false){
+        File.read(reinterpret_cast<char *> (&ac), sizeof(Bank_Account));
+        if(ac.retacno()==n){
+            ac.Display_Account();
+            if(option==1){
+                cout<<"\tEnter the amount to be deposited: ";
+                cin>>amt;
+                ac.dep(amt);
+            }
+            if(option==2){
+                cout<<"\tEnte rthe amount to be withdrawn: ";
+                cin>>amt;
+                int balance = ac.retdeposit() - amt;
+                if(balance < 0){
+                    cout<<"\t Insufficient balance"<<endl;
+                }
+                else {
+                    ac.draw(amt);
+                }
+            }
+            int pos = (-1)*static_cast<int>(sizeof(Bank_Account));
+            File.seekp(pos,ios::cur);
+            File.write(reinterpret_cast<char *> (&ac), sizeof(Bank_Account));
+            cout<<"\t Record updated"<<endl;
+            found=true;
+        }
+    }
+    File.close();
+    if(found==false){
+        cout<<"\tRecord not found"<<endl;
+    }
+}
+
+void Updation_bank_account(int n){
+    bool found = false;
+    Bank_Account ac;
+    fstream File;
+    File.open("account.dat", ios::binary|ios::in|ios::out);
+    if(!File){
+        cout<<"File could not be open || Press any key...";
+        return;
+    }
+    while(!File.eof() && found == false){
+        File.read(reinterpret_cast<char *> (&ac), sizeof(Bank_Account));
+        if (ac.retacno()==n){
+            ac.Display_Account();
+            cout<<"\tEnter the new details of the account"<<endl;
+            ac.modify();
+            int pos = (-1)*static_cast<int>(sizeof(Bank_Account));
+            File.seekp(pos,ios::cur);
+            File.write(reinterpret_cast<char *> (&ac), sizeof(Bank_Account));
+            cout<<"\t Record updated"<<endl;
+            found=true;
+        }
+    }
+    File.close();
+    if(found == false){
+        cout<<"\tRecord not found"<<endl;
+    }
 }
